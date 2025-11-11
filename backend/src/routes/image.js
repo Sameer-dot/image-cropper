@@ -71,10 +71,28 @@ router.post(
       const originalImage = sharp(originalPath);
       const croppedImage = sharp(croppedPath);
       const metadata = await originalImage.metadata();
+      const croppedMetadata = await croppedImage.metadata();
 
-      const resizedCropped = await croppedImage
-        .resize(Math.round(width), Math.round(height), { fit: "fill" })
-        .toBuffer();
+      const targetWidth = Math.round(width);
+      const targetHeight = Math.round(height);
+      const croppedWidth = croppedMetadata.width;
+      const croppedHeight = croppedMetadata.height;
+
+      const widthDiff = Math.abs(croppedWidth - targetWidth);
+      const heightDiff = Math.abs(croppedHeight - targetHeight);
+      const tolerance = 1;
+
+      let resizedCropped;
+
+      if (widthDiff <= tolerance && heightDiff <= tolerance) {
+        resizedCropped = await croppedImage.toBuffer();
+      } else {
+          .resize(targetWidth, targetHeight, { 
+            fit: "cover",
+            position: "center"
+          })
+          .toBuffer();
+      }
 
       const outputsDir = join(__dirname, "../../outputs");
       await fs.mkdir(outputsDir, { recursive: true });
